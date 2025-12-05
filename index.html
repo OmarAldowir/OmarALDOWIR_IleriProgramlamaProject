@@ -1,41 +1,32 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Memory Cards Game</title>
-  <link rel="stylesheet" href="style.css">
-<script src="script.js" defer></script>
+    <meta charset="UTF-8">
+    <title>Flappy Bird Clone</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div class="app">
-    <header>
-      <h1>Memory Cards 🧠</h1>
-      <p class="subtitle">Match the pairs as fast as you can!</p>
-    </header>
 
-    <section class="info-bar">
-      <div class="info-item">
-        <span class="label">Moves:</span>
-        <span id="moves">0</span>
-      </div>
-      <div class="info-item">
-        <span class="label">Time:</span>
-        <span id="time">0s</span>
-      </div>
-      <div class="info-item">
-        <span class="label">Best (Moves):</span>
-        <span id="best">-</span>
-      </div>
-      <button id="restart" class="btn primary">Restart 🔁</button>
-    </section>
+<div class="game-container">
+    <h1>Flappy Bird Clone</h1>
 
-    <main>
-      <div id="game-board" class="game-board">
-        <!-- الكروت تتولّد من JS -->
-      </div>
+    <!-- Controls Buttons -->
+    <div class="top-buttons">
+        <button id="skinBtn">Change Skin</button>
+        <button id="pauseBtn">Pause</button>
+        <button id="resetBestBtn">Reset Best</button>
 
-      <p id="message" class="message"></p>
-    </main>
-  </div>
+    </div>
+
+    <!-- Game Canvas -->
+    <canvas id="gameCanvas" width="400" height="600"></canvas>
+
+    <div class="info">
+        <p>Controls: Press <strong>SPACE</strong> or <strong>CLICK</strong> to jump</p>
+        <p>Goal: Avoid the pipes and get the highest score</p>
+    </div>
+</div>
+
+<script src="script.js"></script>
 </body>
 </html>
