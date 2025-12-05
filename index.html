@@ -1,32 +1,37 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
+    <meta charset="UTF-8" />
     <title>Flappy Bird Clone</title>
-    <link rel="stylesheet" href="style.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <link rel="stylesheet" href="style.css" />
 </head>
 <body>
+    <div class="container">
+        <h1>Flappy Bird Clone</h1>
 
-<div class="game-container">
-    <h1>Flappy Bird Clone</h1>
+        <div class="top-buttons">
+            <button id="skinBtn">Change Skin</button>
+            <button id="pauseBtn">Pause</button>
+            <button id="resetBestBtn">Reset Best</button>
+        </div>
 
-    <!-- Controls Buttons -->
-    <div class="top-buttons">
-        <button id="skinBtn">Change Skin</button>
-        <button id="pauseBtn">Pause</button>
-        <button id="resetBestBtn">Reset Best</button>
+        <div class="game-wrapper">
+            <canvas id="gameCanvas" width="360" height="640"></canvas>
+        </div>
 
+        <div class="info">
+            <p><strong>Controls:</strong> Press <strong>SPACE</strong> or <strong>CLICK</strong> to jump</p>
+            <p><strong>Goal:</strong> Avoid the pipes and get the highest score</p>
+        </div>
     </div>
 
-    <!-- Game Canvas -->
-    <canvas id="gameCanvas" width="400" height="600"></canvas>
+    <!-- Preloaded audio elements (hidden) -->
+    <audio id="flySound" src="sounds/fly.mp3" preload="auto"></audio>
+    <audio id="deathSound" src="sounds/death.mp3" preload="auto"></audio>
+    <audio id="bestSound" src="sounds/check.mp3" preload="auto"></audio>
 
-    <div class="info">
-        <p>Controls: Press <strong>SPACE</strong> or <strong>CLICK</strong> to jump</p>
-        <p>Goal: Avoid the pipes and get the highest score</p>
-    </div>
-</div>
-
-<script src="script.js"></script>
+    <script src="script.js" defer></script>
 </body>
 </html>

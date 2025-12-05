@@ -1,7 +1,10 @@
+// Simple Flappy Bird Clone With Day/Night Cycle & Preloaded Sounds
+// All in-game text is in English
 
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
 
+// Physics & game constants
 const GRAVITY = 0.35;
 const JUMP_STRENGTH = -7;
 const PIPE_SPEED = 2;
@@ -10,22 +13,23 @@ const PIPE_GAP = 140;
 const PIPE_INTERVAL = 1500;
 const GROUND_HEIGHT = 40;
 
-
+// Parallax speeds
 const CLOUD_SPEED = 0.3;
 const HILL_SPEED = 0.7;
 const MOUNTAIN_FAR_SPEED = 0.15;
 
-// DAY / NIGHT SYSTEM
+// Day/Night system
 let isNight = false;
-let dayNightBlend = 0;
+let dayNightBlend = 0;     // 0 = day, 1 = night
 let lastDayNightSwitch = 0;
-const DAY_NIGHT_INTERVAL = 7000;
+const DAY_NIGHT_INTERVAL = 7000; // 7s
 
+// Lerp helper
 function lerp(a, b, t) {
     return a + (b - a) * t;
 }
 
-// Color blending
+// Color blending helpers
 function skyColor() {
     const day = { r: 135, g: 206, b: 235 };
     const night = { r: 10, g: 20, b: 40 };
@@ -63,24 +67,43 @@ let clouds = [];
 let hills = [];
 let mountainsFar = [];
 
-// Bird colors (skins)
+// Bird skins
 const skins = ["#f1c40f", "#e74c3c", "#9b59b6", "#2ecc71", "#3498db"];
 let currentSkin = 0;
 
-// UI
+// UI elements
 const skinBtn = document.getElementById("skinBtn");
 const pauseBtn = document.getElementById("pauseBtn");
 const resetBestBtn = document.getElementById("resetBestBtn");
 
+// Preloaded audio elements
+const flySoundEl = document.getElementById("flySound");
+const deathSoundEl = document.getElementById("deathSound");
+const bestSoundEl = document.getElementById("bestSound");
 
-// Sounds
-const deathSound = new Audio("sounds/death.mp3");
-deathSound.volume = 0.7;
-const bestSound = new Audio("sounds/check.mp3");
-bestSound.volume = 0.6; // إذا بدك تخفف أو تزيد الصوت
+// Sound helpers (clone preloaded audio so no network delay, no cutting)
+function playFlySound() {
+    if (!flySoundEl) return;
+    const s = flySoundEl.cloneNode();
+    s.volume = 0.5;
+    s.play().catch(() => {});
+}
 
+function playDeathSound() {
+    if (!deathSoundEl) return;
+    const s = deathSoundEl.cloneNode();
+    s.volume = 0.7;
+    s.play().catch(() => {});
+}
 
-// Shake + Fade
+function playBestSound() {
+    if (!bestSoundEl) return;
+    const s = bestSoundEl.cloneNode();
+    s.volume = 0.6;
+    s.play().catch(() => {});
+}
+
+// Shake + fade
 let shakeTime = 0;
 const SHAKE_DURATION = 250;
 const SHAKE_MAGNITUDE = 6;
@@ -88,14 +111,16 @@ const SHAKE_MAGNITUDE = 6;
 let deathFade = 0;
 const DEATH_FADE_TIME = 700;
 
+// Game state
 let bird;
 let pipes = [];
 let score = 0;
-let bestScore = 0;
-let gameState = "ready";
+let bestScore = Number(localStorage.getItem("bestScore")) || 0;
+let gameState = "ready"; // "ready", "playing", "paused", "gameover"
 let lastTime = 0;
 let lastPipeTime = 0;
 
+// Bird factory
 function createBird() {
     return {
         x: canvas.width * 0.25,
@@ -106,6 +131,7 @@ function createBird() {
     };
 }
 
+// Background init
 function initBackground() {
     clouds = [];
     mountainsFar = [];
@@ -136,12 +162,15 @@ function initBackground() {
     }
 }
 
+// Reset game
 function resetGame() {
     bird = createBird();
     pipes = [];
     score = 0;
     shakeTime = 0;
     deathFade = 0;
+
+    // reset day/night
     dayNightBlend = 0;
     isNight = false;
     lastDayNightSwitch = performance.now();
@@ -151,8 +180,7 @@ function resetGame() {
     lastPipeTime = 0;
 
     initBackground();
-
-    pauseBtn.textContent = "Pause";
+    if (pauseBtn) pauseBtn.textContent = "Pause";
 }
 
 // Spawn pipe
@@ -170,30 +198,21 @@ function spawnPipe() {
     });
 }
 
+// Input (jump / restart)
 function handleInput() {
     if (gameState === "ready") {
         gameState = "playing";
         bird.velocityY = JUMP_STRENGTH;
-
-        let fly = new Audio("sounds/fly.mp3");
-        fly.volume = 0.5;
-        fly.play();
-    }
-
-    else if (gameState === "playing") {
+        playFlySound();
+    } else if (gameState === "playing") {
         bird.velocityY = JUMP_STRENGTH;
-
-        let fly = new Audio("sounds/fly.mp3");
-        fly.volume = 0.5;
-        fly.play();
-    }
-
-    else if (gameState === "gameover") {
+        playFlySound();
+    } else if (gameState === "gameover") {
         resetGame();
     }
 }
 
-// Pause
+// Pause toggle
 function togglePause() {
     if (gameState === "playing") {
         gameState = "paused";
@@ -204,46 +223,50 @@ function togglePause() {
     }
 }
 
+// Update game
 function update(delta) {
     if (gameState !== "playing") return;
 
     const now = performance.now();
 
-    // Day/Night switching
+    // Day/night switch
     if (now - lastDayNightSwitch >= DAY_NIGHT_INTERVAL) {
         isNight = !isNight;
         lastDayNightSwitch = now;
     }
 
+    // Blend day/night smoothly
     dayNightBlend += (isNight ? 1 : -1) * delta / 1500;
     dayNightBlend = Math.max(0, Math.min(1, dayNightBlend));
 
-    // Move layers
+    // Parallax movement
     clouds.forEach(c => {
         c.x -= CLOUD_SPEED;
-        if (c.x < -100) c.x = canvas.width + 100;
+        if (c.x < -120) c.x = canvas.width + 120;
     });
 
     mountainsFar.forEach(m => {
         m.x -= MOUNTAIN_FAR_SPEED;
-        if (m.x + m.width < 0) m.x = canvas.width + 100;
+        if (m.x + m.width < 0) m.x = canvas.width + 120;
     });
 
     hills.forEach(h => {
         h.x -= HILL_SPEED;
-        if (h.x + h.width < 0) h.x = canvas.width + 50;
+        if (h.x + h.width < 0) h.x = canvas.width + 60;
     });
 
     // Bird physics
     bird.velocityY += GRAVITY;
     bird.y += bird.velocityY;
 
-    if (bird.velocityY < -2)
+    // Rotation (tilt)
+    if (bird.velocityY < -2) {
         bird.rotation = Math.min(bird.rotation + 0.2, 0.6);
-    else
+    } else {
         bird.rotation = Math.max(bird.rotation - 0.15, -1.2);
+    }
 
-    // Boundaries
+    // Hit ground or top
     if (bird.y + bird.radius > canvas.height - GROUND_HEIGHT || bird.y < bird.radius) {
         gameOver();
     }
@@ -254,39 +277,26 @@ function update(delta) {
         lastPipeTime = now;
     }
 
+    // Move pipes & scoring
     pipes.forEach((p, i) => {
         p.x -= PIPE_SPEED;
 
-        // if (!p.passed && p.x + p.width < bird.x) {
-        //     score++;
-        //     if (score > bestScore) bestScore = score;
-        //     p.passed = true;
-        // }
         if (!p.passed && p.x + p.width < bird.x) {
-    score++;
-
-    if (score > bestScore) {
-        bestScore = score;
-
-        // NEW: play best score sound
-        let s = new Audio("sounds/check.mp3");
-        s.volume = 0.6;
-        s.play();
-
-       
-        localStorage.setItem("bestScore", bestScore);
-    }
-
-    p.passed = true;
-}
-
+            score++;
+            if (score > bestScore) {
+                bestScore = score;
+                localStorage.setItem("bestScore", bestScore);
+                playBestSound();
+            }
+            p.passed = true;
+        }
 
         if (checkCollision(bird, p)) gameOver();
-
         if (p.x + p.width < 0) pipes.splice(i, 1);
     });
 }
 
+// Collision check
 function checkCollision(bird, pipe) {
     const inX = bird.x + bird.radius > pipe.x && bird.x - bird.radius < pipe.x + pipe.width;
     if (!inX) return false;
@@ -297,20 +307,21 @@ function checkCollision(bird, pipe) {
     return bird.y - bird.radius < top || bird.y + bird.radius > bottom;
 }
 
+// Game over
 function gameOver() {
     if (gameState !== "gameover") {
-        deathSound.play();
+        playDeathSound();
         shakeTime = SHAKE_DURATION;
         deathFade = 0;
     }
     gameState = "gameover";
 }
 
+// Draw
 function draw() {
-
     ctx.save();
 
-    // Shake
+    // Screen shake
     if (shakeTime > 0) {
         ctx.translate(
             (Math.random() - 0.5) * SHAKE_MAGNITUDE,
@@ -326,19 +337,21 @@ function draw() {
     if (dayNightBlend > 0.5) {
         ctx.fillStyle = "white";
         for (let i = 0; i < 40; i++) {
-            ctx.fillRect((i * 70 + performance.now() / 40) % canvas.width, (i * 35) % 200, 2, 2);
+            const x = (i * 70 + performance.now() / 50) % canvas.width;
+            const y = (i * 33) % (canvas.height / 2);
+            ctx.fillRect(x, y, 2, 2);
         }
     }
 
     // Clouds
     clouds.forEach(c => {
-        ctx.fillStyle = `rgba(255,255,255,${lerp(1,0.3,dayNightBlend)})`;
+        ctx.fillStyle = `rgba(255,255,255,${lerp(1, 0.3, dayNightBlend)})`;
         ctx.beginPath();
         ctx.ellipse(c.x, c.y, c.radius * 1.5, c.radius, 0, 0, Math.PI * 2);
         ctx.fill();
     });
 
-    // Mountains
+    // Far mountains
     ctx.fillStyle = mountainColor();
     mountainsFar.forEach(m => {
         ctx.beginPath();
@@ -366,7 +379,6 @@ function draw() {
     ctx.fillStyle = pipeColor();
     ctx.strokeStyle = "#000";
     ctx.lineWidth = 3;
-
     pipes.forEach(p => {
         const topHeight = p.gapY - p.gapHeight / 2;
         const bottomStart = p.gapY + p.gapHeight / 2;
@@ -382,13 +394,14 @@ function draw() {
     ctx.fillStyle = dayNightBlend > 0.5 ? "#4d4d4d" : "#ded895";
     ctx.fillRect(0, canvas.height - GROUND_HEIGHT, canvas.width, GROUND_HEIGHT);
 
-    // BIRD
+    // Bird
     ctx.save();
     ctx.translate(bird.x, bird.y);
     ctx.rotate(bird.rotation);
 
-    if (gameState === "gameover")
+    if (gameState === "gameover") {
         ctx.globalAlpha = 1 - deathFade;
+    }
 
     // Body
     ctx.fillStyle = skins[currentSkin];
@@ -437,6 +450,7 @@ function draw() {
     // UI
     ctx.fillStyle = "#000";
     ctx.font = "24px Arial";
+    ctx.textAlign = "left";
     ctx.fillText("Score: " + score, 10, 30);
     ctx.fillText("Best: " + bestScore, 10, 60);
 
@@ -444,8 +458,7 @@ function draw() {
 
     if (gameState === "ready") {
         ctx.font = "28px Arial";
-        ctx.fillText("Press SPACE or CLICK to start ", canvas.width / 2, canvas.height / 2);
-        
+        ctx.fillText("Press SPACE or CLICK to start", canvas.width / 2, canvas.height / 2);
     }
 
     if (gameState === "paused") {
@@ -468,13 +481,15 @@ function draw() {
         ctx.fillStyle = "#000";
         ctx.fillText(scoreText, canvas.width / 2, canvas.height / 2 + 10);
 
-        ctx.strokeText("Press SPACE or CLICK to restart", canvas.width / 2, canvas.height / 2 + 40);
-        ctx.fillText("Press SPACE or CLICK to restart", canvas.width / 2, canvas.height / 2 + 40);
+        const restartText = "Press SPACE or CLICK to restart";
+        ctx.strokeText(restartText, canvas.width / 2, canvas.height / 2 + 40);
+        ctx.fillText(restartText, canvas.width / 2, canvas.height / 2 + 40);
     }
 
     ctx.restore();
 }
 
+// Main loop
 function gameLoop(t) {
     const delta = t - lastTime;
     lastTime = t;
@@ -484,7 +499,6 @@ function gameLoop(t) {
     if (gameState === "gameover") {
         deathFade += delta / DEATH_FADE_TIME;
         if (deathFade > 1) deathFade = 1;
-
         bird.y += 0.1 * delta;
     }
 
@@ -493,23 +507,38 @@ function gameLoop(t) {
     requestAnimationFrame(gameLoop);
 }
 
+// Events
 document.addEventListener("keydown", e => {
-    if (e.code === "Space") handleInput();
-    if (e.code === "KeyP") togglePause();
+    if (e.code === "Space") {
+        e.preventDefault();
+        handleInput();
+    }
+    if (e.code === "KeyP") {
+        e.preventDefault();
+        togglePause();
+    }
 });
 
 canvas.addEventListener("mousedown", handleInput);
-canvas.addEventListener("touchstart", handleInput);
+canvas.addEventListener("touchstart", (e) => {
+    e.preventDefault();
+    handleInput();
+}, { passive: false });
 
+// Skin button
 skinBtn.addEventListener("click", () => {
     currentSkin = (currentSkin + 1) % skins.length;
 });
 
+// Pause button
 pauseBtn.addEventListener("click", togglePause);
+
+// Reset best score button
 resetBestBtn.addEventListener("click", () => {
-    bestScore = 0;                  
+    bestScore = 0;
     localStorage.removeItem("bestScore");
 });
 
+// Init
 resetGame();
 requestAnimationFrame(gameLoop);
