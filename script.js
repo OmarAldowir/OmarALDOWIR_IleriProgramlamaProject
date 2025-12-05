@@ -273,7 +273,7 @@ function update(delta) {
         s.volume = 0.6;
         s.play();
 
-        // إذا تستخدم LocalStorage لخزن البيست سكور:
+       
         localStorage.setItem("bestScore", bestScore);
     }
 
@@ -507,8 +507,8 @@ skinBtn.addEventListener("click", () => {
 
 pauseBtn.addEventListener("click", togglePause);
 resetBestBtn.addEventListener("click", () => {
-    bestScore = 0;                  // رجّع البيست سكور للصفر
-    localStorage.removeItem("bestScore"); // امسح من التخزين (اختياري)
+    bestScore = 0;                  
+    localStorage.removeItem("bestScore");
 });
 
 resetGame();
